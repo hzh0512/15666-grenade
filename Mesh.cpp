@@ -11,12 +11,18 @@
 #include <set>
 #include <cstddef>
 
-MeshBuffer::MeshBuffer(std::string const &filename) {
+MeshBuffer::MeshBuffer(std::vector<std::string> const &filename) {
 	glGenBuffers(1, &buffer);
 
-	std::ifstream file(filename, std::ios::binary);
+	std::vector<int> data_index(1, 0), str_index(1, 0);
+	int data_index_i = 0, str_index_i = 0;
 
-	GLuint total = 0;
+	std::vector<std::ifstream> file;
+	for (auto &fn : filename) {
+	    file.emplace_back(fn, std::ios::binary);
+	}
+
+//	GLuint total = 0;
 
 	struct Vertex {
 		glm::vec3 Position;
@@ -25,30 +31,37 @@ MeshBuffer::MeshBuffer(std::string const &filename) {
 		glm::vec2 TexCoord;
 	};
 	static_assert(sizeof(Vertex) == 3*4+3*4+4*1+2*4, "Vertex is packed.");
-	std::vector< Vertex > data;
+	std::vector< Vertex > data, temp;
 
 	//read + upload data chunk:
-	if (filename.size() >= 5 && filename.substr(filename.size()-5) == ".pnct") {
-		read_chunk(file, "pnct", &data);
-
-		//upload data:
-		glBindBuffer(GL_ARRAY_BUFFER, buffer);
-		glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(Vertex), data.data(), GL_STATIC_DRAW);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-		total = GLuint(data.size()); //store total for later checks on index
-
-		//store attrib locations:
-		Position = Attrib(3, GL_FLOAT, GL_FALSE, sizeof(Vertex), offsetof(Vertex, Position));
-		Normal = Attrib(3, GL_FLOAT, GL_FALSE, sizeof(Vertex), offsetof(Vertex, Normal));
-		Color = Attrib(4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), offsetof(Vertex, Color));
-		TexCoord = Attrib(2, GL_FLOAT, GL_FALSE, sizeof(Vertex), offsetof(Vertex, TexCoord));
-	} else {
-		throw std::runtime_error("Unknown file type '" + filename + "'");
+	for (auto &f : file) {
+        read_chunk(f, "pnct", &temp);
+        data_index.push_back(temp.size());
+        data.insert(data.end(), temp.begin(), temp.end());
 	}
 
-	std::vector< char > strings;
-	read_chunk(file, "str0", &strings);
+    //upload data:
+    glBindBuffer(GL_ARRAY_BUFFER, buffer);
+    glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(Vertex), data.data(), GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+//    total = GLuint(data.size()); //store total for later checks on index
+
+    //store attrib locations:
+    Position = Attrib(3, GL_FLOAT, GL_FALSE, sizeof(Vertex), offsetof(Vertex, Position));
+    Normal = Attrib(3, GL_FLOAT, GL_FALSE, sizeof(Vertex), offsetof(Vertex, Normal));
+    Color = Attrib(4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), offsetof(Vertex, Color));
+    TexCoord = Attrib(2, GL_FLOAT, GL_FALSE, sizeof(Vertex), offsetof(Vertex, TexCoord));
+
+
+
+	std::vector< char > strings, temp2;
+
+    for (auto &f : file) {
+        read_chunk(f, "str0", &temp2);
+        str_index.push_back(temp2.size());
+        strings.insert(strings.end(), temp2.begin(), temp2.end());
+    }
 
 	{ //read index chunk, add to meshes:
 		struct IndexEntry {
@@ -57,35 +70,47 @@ MeshBuffer::MeshBuffer(std::string const &filename) {
 		};
 		static_assert(sizeof(IndexEntry) == 16, "Index entry should be packed");
 
-		std::vector< IndexEntry > index;
-		read_chunk(file, "idx0", &index);
+		for (auto& f : file) {
+            std::vector< IndexEntry > index;
+            read_chunk(f, "idx0", &index);
 
-		for (auto const &entry : index) {
-			if (!(entry.name_begin <= entry.name_end && entry.name_end <= strings.size())) {
-				throw std::runtime_error("index entry has out-of-range name begin/end");
-			}
-			if (!(entry.vertex_begin <= entry.vertex_end && entry.vertex_end <= total)) {
-				throw std::runtime_error("index entry has out-of-range vertex start/count");
-			}
-			std::string name(&strings[0] + entry.name_begin, &strings[0] + entry.name_end);
-			Mesh mesh;
-			mesh.type = GL_TRIANGLES;
-			mesh.start = entry.vertex_begin;
-			mesh.count = entry.vertex_end - entry.vertex_begin;
-			for (uint32_t v = entry.vertex_begin; v < entry.vertex_end; ++v) {
-				mesh.min = glm::min(mesh.min, data[v].Position);
-				mesh.max = glm::max(mesh.max, data[v].Position);
-			}
-			bool inserted = meshes.insert(std::make_pair(name, mesh)).second;
-			if (!inserted) {
-				std::cerr << "WARNING: mesh name '" + name + "' in filename '" + filename + "' collides with existing mesh." << std::endl;
-			}
+            data_index_i += data_index.front();
+            str_index_i += str_index.front();
+            data_index.erase(data_index.begin());
+            str_index.erase(str_index.begin());
+
+            for (auto const &entry : index) {
+//                if (!(entry.name_begin <= entry.name_end && entry.name_end <= strings.size())) {
+//                    throw std::runtime_error("index entry has out-of-range name begin/end");
+//                }
+//                if (!(entry.vertex_begin <= entry.vertex_end && entry.vertex_end <= total)) {
+//                    throw std::runtime_error("index entry has out-of-range vertex start/count");
+//                }
+                std::string name(&strings[0] + entry.name_begin + str_index_i, &strings[0]
+                + entry.name_end + str_index_i);
+//                std::cout << name << std::endl;
+                Mesh mesh;
+                mesh.type = GL_TRIANGLES;
+                mesh.start = entry.vertex_begin + data_index_i;
+                mesh.count = entry.vertex_end - entry.vertex_begin;
+                for (uint32_t v = entry.vertex_begin + data_index_i; v <
+                entry.vertex_end + data_index_i;
+                ++v) {
+                    mesh.min = glm::min(mesh.min, data[v].Position);
+                    mesh.max = glm::max(mesh.max, data[v].Position);
+                }
+                bool inserted = meshes.insert(std::make_pair(name, mesh)).second;
+                if (!inserted) {
+                    std::cout << "WARNING: mesh name '" + name + " collides "
+                                                                 "with existing mesh." << std::endl;
+                }
+            }
 		}
 	}
 
-	if (file.peek() != EOF) {
-		std::cerr << "WARNING: trailing data in mesh file '" << filename << "'" << std::endl;
-	}
+//	if (file.peek() != EOF) {
+//		std::cerr << "WARNING: trailing data in mesh file '" << filename << "'" << std::endl;
+//	}
 
 	/* //DEBUG:
 	std::cout << "File '" << filename << "' contained meshes";

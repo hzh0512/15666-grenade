@@ -1,19 +1,23 @@
-# (TODO: your game's title)
+# Grenade
 
-Author: (TODO: your name)
+Author: Zihao He
 
-Design: (TODO: In two sentences or fewer, describe what is new and interesting about your game.)
+Design: Throw grenades to blue cars! Avoid other vehicles as they are innocent. 
 
 Screen Shot:
 
 ![Screen Shot](screenshot.png)
 
+![Screen Shot](screenshot2.png)
+
 How To Play:
 
-(TODO: describe the controls and (if needed) goals/strategy.)
+Left click to throw a grenade to destroy evil blue cars. Be mindful that cars are moving so do your math in advance. Each round is 30s.
 
 Sources:
 
-(TODO: fill in information about the sources of any **artwork** or **sounds** you used in the game that you did not create yourself. Feel free to also credit yourself for things you did make.)
+The car 3D blender model was found [here](https://www.turbosquid.com/FullPreview/Index.cfm/ID/1281716).
+
+The city model was modified from the original 'watch' demo.
 
 This game was built with [NEST](NEST.md).

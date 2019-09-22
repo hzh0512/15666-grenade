@@ -83,7 +83,7 @@ int main(int argc, char **argv) {
 	MeshBuffer *buffer = nullptr;
 	if (argc == 2) {
 		try {
-			buffer = new MeshBuffer(argv[1]);
+			buffer = new MeshBuffer({argv[1]});
 		} catch (std::exception &e) {
 			std::cerr << "ERROR: " << e.what() << std::endl;
 			usage = true;

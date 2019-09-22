@@ -121,6 +121,15 @@ for obj in bpy.data.objects:
 	colors = None
 	if len(obj.data.vertex_colors) == 0:
 		print("WARNING: trying to export color data, but object '" + name + "' does not have color data; will output 0xffffffff")
+		r = input(name + ": ")
+		if r == 'w':
+			co = struct.pack('BBBB', 233, 233, 233, 255)
+		elif r == 'r':
+			co = struct.pack('BBBB', 233, 0, 0, 255)
+		elif r == 'b':
+			co = struct.pack('BBBB', 0, 0, 233, 255)
+		elif r == 'h':
+			co = struct.pack('BBBB', 0, 0, 0, 255)
 	else:
 		colors = obj.data.vertex_colors.active.data
 
@@ -130,6 +139,7 @@ for obj in bpy.data.objects:
 	else:
 		uvs = obj.data.uv_layers.active.data
 
+	print(len(mesh.polygons))
 	#write the mesh triangles:
 	for poly in mesh.polygons:
 		assert(len(poly.loop_indices) == 3)
@@ -145,7 +155,8 @@ for obj in bpy.data.objects:
 				col = colors[poly.loop_indices[i]].color
 				data += struct.pack('BBBB', int(col[0] * 255), int(col[1] * 255), int(col[2] * 255), int(col[3] * 255))
 			else:
-				data += struct.pack('BBBB', 255, 255, 255, 255)
+				data += co
+				
 			if uvs != None:
 				uv = uvs[poly.loop_indices[i]].uv
 				data += struct.pack('ff', uv.x, uv.y)

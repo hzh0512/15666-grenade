@@ -9,6 +9,8 @@
 
 //-------------------------
 
+Scene::Transform global_trans;
+
 glm::mat4 Scene::Transform::make_local_to_parent() const {
 	return glm::mat4( //translate
 		glm::vec4(1.0f, 0.0f, 0.0f, 0.0f),
@@ -73,6 +75,20 @@ void Scene::draw(Camera const &camera) const {
 	glm::mat4 world_to_clip = camera.make_projection() * camera.transform->make_world_to_local();
 	glm::mat4x3 world_to_light = glm::mat4x3(1.0f);
 	draw(world_to_clip, world_to_light);
+}
+
+void Scene::draw(Camera const &camera, Transform const &trans) const{
+    auto pos = global_trans.position;
+    auto rot = global_trans.rotation;
+    auto sc = global_trans.scale;
+    global_trans.position = trans.position;
+    global_trans.rotation = trans.rotation;
+    global_trans.scale = trans.scale;
+    global_trans.parent = nullptr;
+    draw(camera);
+    global_trans.position = pos;
+    global_trans.rotation = rot;
+    global_trans.scale = sc;
 }
 
 void Scene::draw(glm::mat4 const &world_to_clip, glm::mat4x3 const &world_to_light) const {
@@ -222,6 +238,9 @@ void Scene::load(std::string const &filename,
 			}
 			t->parent = hierarchy_transforms[h.parent];
 		}
+		else {
+		    t->parent = &global_trans;
+		}
 
 		if (h.name_begin <= h.name_end && h.name_end <= names.size()) {
 			t->name = std::string(names.begin() + h.name_begin, names.begin() + h.name_end);
@@ -261,6 +280,7 @@ void Scene::load(std::string const &filename,
 			continue;
 		}
 		this->cameras.emplace_back(hierarchy_transforms[c.transform]);
+        hierarchy_transforms[c.transform]->parent = nullptr;
 		Camera *camera = &this->cameras.back();
 		camera->fovy = c.data / 180.0f * 3.1415926f; //FOV is stored in degrees; convert to radians.
 		camera->near = c.clip_near;

@@ -1,25 +1,21 @@
 
-BLENDER=../../blender-2.80-linux-glibc217-x86_64/blender
+BLENDER=blender
 
-all : ../dist/brunch.pnct ../dist/brunch.scene ../dist/garden.pnct ../dist/garden.scene ../dist/city.pnct ../dist/city.scene #hexapod.pnct hexapod.scene
+all : ../dist/city.pnct ../dist/city.scene ../dist/redcar.pnct ../dist/redcar.scene ../dist/bluecar.pnct ../dist/bluecar.scene ../dist/grenade.pnct ../dist/grenade.scene
 
 ../dist/city.pnct : city.blend export-meshes.py
-	$(BLENDER) --background --python export-meshes.py -- city.blend:Parts '$@'
-
+	$(BLENDER) --background --python export-meshes.py -- city.blend:Scene '$@'
 ../dist/city.scene : city.blend export-scene.py
 	$(BLENDER) --background --python export-scene.py -- city.blend:Scene '$@'
-../dist/brunch.pnct : brunch.blend export-meshes.py
-	$(BLENDER) --background --python export-meshes.py -- brunch.blend '$@'
-../dist/brunch.scene : brunch.blend export-scene.py
-	$(BLENDER) --background --python export-scene.py -- brunch.blend '$@'
-
-../dist/garden.pnct : garden.blend export-meshes.py
-	$(BLENDER) --background --python export-meshes.py -- garden.blend '$@'
-../dist/garden.scene : garden.blend export-scene.py
-	$(BLENDER) --background --python export-scene.py -- garden.blend '$@'
-
-hexapod.pnct : hexapod.blend export-meshes.py
-	$(BLENDER) --background --python export-meshes.py -- hexapod.blend:Main '$@'
-
-hexapod.scene : hexapod.blend export-scene.py
-	$(BLENDER) --background --python export-scene.py -- hexapod.blend:Main '$@'
+../dist/redcar.pnct : car.blend export-meshes.py
+	$(BLENDER) --background --python export-meshes.py -- car.blend:red '$@'
+../dist/redcar.scene : car.blend export-scene.py
+	$(BLENDER) --background --python export-scene.py -- car.blend:red '$@'
+../dist/bluecar.pnct : car.blend export-meshes.py
+	$(BLENDER) --background --python export-meshes.py -- car.blend:blue '$@'
+../dist/bluecar.scene : car.blend export-scene.py
+	$(BLENDER) --background --python export-scene.py -- car.blend:blue '$@'
+../dist/grenade.pnct : grenade.blend export-meshes.py
+	$(BLENDER) --background --python export-meshes.py -- grenade.blend '$@'
+../dist/grenade.scene : grenade.blend export-scene.py
+	$(BLENDER) --background --python export-scene.py -- grenade.blend '$@'

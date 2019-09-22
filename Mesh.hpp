@@ -14,6 +14,7 @@
 #include <map>
 #include <limits>
 #include <string>
+#include <vector>
 
 
 struct Mesh {
@@ -32,7 +33,7 @@ struct Mesh {
 struct MeshBuffer {
 	//construct from a file:
 	// note: will throw if file fails to read.
-	MeshBuffer(std::string const &filename);
+	MeshBuffer(std::vector<std::string> const &filename);
 
 	//look up a particular mesh by name:
 	// note: will throw if mesh not found.

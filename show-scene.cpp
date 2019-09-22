@@ -95,7 +95,7 @@ int main(int argc, char **argv) {
 	GLuint buffer_vao = 0;
 	if (meshes_file != "") {
 		try {
-			buffer = new MeshBuffer(meshes_file);
+			buffer = new MeshBuffer({meshes_file});
 			buffer_vao = buffer->make_vao_for_program(show_scene_program->program);
 		} catch (std::exception &e) {
 			std::cerr << "ERROR loading mesh buffer '" << meshes_file << "': " << e.what() << std::endl;
